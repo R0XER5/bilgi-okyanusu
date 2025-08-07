@@ -1,15 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { posts, users, admins, comments } from '../data/dummyData';
+import { users, admins, comments } from '../data/dummyData';
+import { usePosts } from '../context/PostContext';
 import RecommendedPosts from '../components/RecommendedPosts';
 
 const PostDetail = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
-  const post = posts.find(p => p.id === parseInt(postId));
-  const [postViews, setPostViews] = useState(post?.views || 0);
-  const [likes, setLikes] = useState(post?.likes || 0);
-  const [shares, setShares] = useState(post?.shares || 0);
+  const [postViews, setPostViews] = useState(0);
+  const [likes, setLikes] = useState(0);
+  const [shares, setShares] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -22,9 +22,29 @@ const PostDetail = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const hasViewBeenCounted = useRef(false);
 
+  const { getPostById, loading, error } = usePosts();
+  const post = getPostById(postId);
+
+  // Post bulunduğunda state'leri güncelle
+  useEffect(() => {
+    if (post) {
+      setPostViews(post.views || 0);
+      setLikes(post.likes || 0);
+      setShares(post.shares || 0);
+    }
+  }, [post]);
+
   // Yazar bulma fonksiyonu
   const getAuthor = (post) => {
-    if (post.authorId) {
+    // Backend'den gelen yazar bilgilerini kullan
+    if (post?.writerFirstName && post?.writerLastName) {
+      return {
+        name: `${post.writerFirstName} ${post.writerLastName}`,
+        profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde'
+      };
+    }
+    
+    if (post?.authorId) {
       return admins.find(admin => admin.id === post.authorId) || users.find(user => user.id === post.userId);
     }
     return users.find(user => user.id === post.userId);
@@ -134,6 +154,97 @@ const PostDetail = () => {
     });
   };
 
+  // Yükleme durumu
+  if (loading) {
+    return (
+      <div className="container" style={{ 
+        marginTop: '100px', 
+        maxWidth: '600px',
+        textAlign: 'center',
+        padding: '0 20px'
+      }}>
+        <div className="card" style={{
+          padding: '48px 24px',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid var(--border-color)',
+            borderTop: '3px solid var(--primary-color)',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 24px'
+          }}></div>
+          <h2 style={{
+            fontSize: '1.8rem',
+            fontWeight: '600',
+            marginBottom: '16px',
+            color: 'var(--text-color)'
+          }}>Yazı Yükleniyor...</h2>
+          <p style={{
+            fontSize: '1.1rem',
+            color: 'var(--text-secondary)',
+            lineHeight: '1.6'
+          }}>
+            Yazı detayları yükleniyor, lütfen bekleyin.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Hata durumu
+  if (error) {
+    return (
+      <div className="container" style={{ 
+        marginTop: '100px', 
+        maxWidth: '600px',
+        textAlign: 'center',
+        padding: '0 20px'
+      }}>
+        <div className="card" style={{
+          padding: '48px 24px',
+          textAlign: 'center'
+        }}>
+          <span className="material-icons" style={{
+            fontSize: '64px',
+            color: '#dc3545',
+            marginBottom: '24px'
+          }}>error</span>
+          <h2 style={{
+            fontSize: '1.8rem',
+            fontWeight: '600',
+            marginBottom: '16px',
+            color: 'var(--text-color)'
+          }}>Hata Oluştu</h2>
+          <p style={{
+            fontSize: '1.1rem',
+            color: 'var(--text-secondary)',
+            marginBottom: '32px',
+            lineHeight: '1.6'
+          }}>
+            {error}
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <button
+              onClick={() => window.location.reload()}
+              className="btn btn-primary"
+            >
+              <span className="material-icons">refresh</span>
+              Tekrar Dene
+            </button>
+            <Link to="/feed" className="btn btn-outline">
+              <span className="material-icons">home</span>
+              Ana Sayfaya Dön
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Yazı bulunamadı durumu
   if (!post) {
     return (
       <div className="container" style={{ 

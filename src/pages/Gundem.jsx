@@ -2,18 +2,20 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Post from '../components/Post';
 import AdminCreatePost from '../components/AdminCreatePost';
-import { posts, users } from '../data/dummyData';
+import { users } from '../data/dummyData';
+import { usePosts } from '../context/PostContext';
 import '../styles/Feed.css';
 
 const Gundem = ({ currentAdmin }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [feedPosts, setFeedPosts] = useState([...posts]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 8;
+  
+  const { posts: feedPosts, loading, error, addPost } = usePosts();
 
   const handlePostCreated = (newPost) => {
-    setFeedPosts([newPost, ...feedPosts]);
+    addPost(newPost);
     setCurrentPage(1);
   };
 
@@ -722,38 +724,105 @@ const Gundem = ({ currentAdmin }) => {
               </div>
             )}
 
-            {/* Yazılar */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              {currentPosts.length > 0 ? (
-                currentPosts.map(post => (
-                  <Post key={post.id} post={post} />
-                ))
-              ) : (
+            {/* Yükleme Durumu */}
+            {loading && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '60px 20px',
+                color: 'var(--text-secondary)',
+                fontSize: '1.1rem'
+              }}>
                 <div style={{
-                  textAlign: 'center',
-                  padding: '60px 24px',
-                  color: 'var(--text-secondary)',
-                  fontSize: '1.1rem',
-                  background: 'var(--surface-color)',
-                  border: '2px solid var(--border-color)',
-                  borderRadius: '0'
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '16px'
                 }}>
-                  <span className="material-icons" style={{ 
-                    fontSize: '64px', 
-                    marginBottom: '20px', 
-                    display: 'block',
-                    color: 'var(--primary-color)',
-                    opacity: 0.5
-                  }}>
-                    {selectedCategory !== 'all' ? 'category' : 'article'}
-                  </span>
-                  {selectedCategory !== 'all' 
-                    ? `"${categories.find(c => c.id === selectedCategory)?.name}" kategorisinde henüz yazı bulunmuyor.`
-                    : 'Henüz yazı bulunmuyor.'
-                  }
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '3px solid var(--border-color)',
+                    borderTop: '3px solid var(--primary-color)',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }}></div>
+                  <span>Yazılar yükleniyor...</span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Hata Durumu */}
+            {error && !loading && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '60px 20px',
+                color: '#dc3545',
+                fontSize: '1.1rem'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '16px'
+                }}>
+                  <span className="material-icons" style={{ fontSize: '48px' }}>error</span>
+                  <span>{error}</span>
+                  <button
+                    onClick={() => window.location.reload()}
+                    style={{
+                      padding: '8px 16px',
+                      background: 'var(--primary-color)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    Tekrar Dene
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Yazılar */}
+            {!loading && !error && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {currentPosts.length > 0 ? (
+                  currentPosts.map(post => (
+                    <Post key={post.id} post={post} />
+                  ))
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '60px 24px',
+                    color: 'var(--text-secondary)',
+                    fontSize: '1.1rem',
+                    background: 'var(--surface-color)',
+                    border: '2px solid var(--border-color)',
+                    borderRadius: '0'
+                  }}>
+                    <span className="material-icons" style={{ 
+                      fontSize: '64px', 
+                      marginBottom: '20px', 
+                      display: 'block',
+                      color: 'var(--primary-color)',
+                      opacity: 0.5
+                    }}>
+                      {selectedCategory !== 'all' ? 'category' : 'article'}
+                    </span>
+                    {selectedCategory !== 'all' 
+                      ? `"${categories.find(c => c.id === selectedCategory)?.name}" kategorisinde henüz yazı bulunmuyor.`
+                      : 'Henüz yazı bulunmuyor.'
+                    }
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Sayfalama */}
             {totalPages > 1 && (

@@ -3,17 +3,19 @@ import Post from '../components/Post';
 import TrendingPosts from '../components/TrendingPosts';
 import RecommendedPosts from '../components/RecommendedPosts';
 import AdminCreatePost from '../components/AdminCreatePost';
-import { posts, users } from '../data/dummyData';
+import { users } from '../data/dummyData';
+import { usePosts } from '../context/PostContext';
 import '../styles/Feed.css';
 
 const Feed = ({ currentAdmin }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [feedPosts, setFeedPosts] = useState([...posts]);
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 6;
+  
+  const { posts: feedPosts, loading, error, addPost } = usePosts();
 
   const handlePostCreated = (newPost) => {
-    setFeedPosts([newPost, ...feedPosts]);
+    addPost(newPost);
     setCurrentPage(1); // Yeni yazı eklendiğinde ilk sayfaya dön
   };
 
@@ -146,12 +148,100 @@ const Feed = ({ currentAdmin }) => {
         
         {/* Ana İçerik */}
         <div className="main-content">
+          {/* Yükleme Durumu */}
+          {loading && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '60px 20px',
+              color: 'var(--text-secondary)',
+              fontSize: '1.1rem'
+            }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '16px'
+              }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '3px solid var(--border-color)',
+                  borderTop: '3px solid var(--primary-color)',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }}></div>
+                <span>Yazılar yükleniyor...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Hata Durumu */}
+          {error && !loading && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '60px 20px',
+              color: '#dc3545',
+              fontSize: '1.1rem'
+            }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '16px'
+              }}>
+                <span className="material-icons" style={{ fontSize: '48px' }}>error</span>
+                <span>{error}</span>
+                <button
+                  onClick={() => window.location.reload()}
+                  style={{
+                    padding: '8px 16px',
+                    background: 'var(--primary-color)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  Tekrar Dene
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Gönderiler */}
-          <div className="posts">
-            {currentPosts.map(post => (
-              <Post key={post.id} post={post} />
-            ))}
-          </div>
+          {!loading && !error && (
+            <div className="posts">
+              {currentPosts.length > 0 ? (
+                currentPosts.map(post => (
+                  <Post key={post.id} post={post} />
+                ))
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: '60px 20px',
+                  color: 'var(--text-secondary)',
+                  fontSize: '1.1rem'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}>
+                    <span className="material-icons" style={{ fontSize: '48px' }}>article</span>
+                    <span>Henüz yazı bulunmuyor</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Sayfalama */}
           {totalPages > 1 && (

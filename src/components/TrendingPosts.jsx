@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { posts, users, admins } from '../data/dummyData';
+import { users, admins } from '../data/dummyData';
+import { usePosts } from '../context/PostContext';
 
 const TrendingPosts = () => {
+  const { posts } = usePosts();
   const [showAll, setShowAll] = useState(false);
 
   const trendingPosts = useMemo(() => {
@@ -19,11 +21,19 @@ const TrendingPosts = () => {
         // Değilse görüntüleme sayısına göre sırala
         return viewsB - viewsA;
       })
-      .slice(0, 5);
-  }, []);
+      .slice(0, 10);
+  }, [posts]);
 
   // Yazar bulma fonksiyonu
   const getAuthor = (post) => {
+    // Backend'den gelen yazar bilgilerini kullan
+    if (post.writerFirstName && post.writerLastName) {
+      return {
+        name: `${post.writerFirstName} ${post.writerLastName}`,
+        profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde'
+      };
+    }
+    
     if (post.authorId) {
       return admins.find(admin => admin.id === post.authorId) || users.find(user => user.id === post.userId);
     }
@@ -31,7 +41,7 @@ const TrendingPosts = () => {
   };
 
   // Gösterilecek yazıları belirle
-  const displayedPosts = showAll ? trendingPosts : trendingPosts.slice(0, 3);
+  const displayedPosts = showAll ? trendingPosts : trendingPosts.slice(0, 6);
 
   return (
     <div className="card" style={{
@@ -152,7 +162,7 @@ const TrendingPosts = () => {
         ))}
       </div>
 
-      {trendingPosts.length > 3 && (
+      {trendingPosts.length > 6 && (
         <button
           onClick={() => setShowAll(!showAll)}
           style={{
