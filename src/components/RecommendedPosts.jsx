@@ -1,127 +1,218 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { posts, users } from '../data/dummyData';
+import { posts, users, admins } from '../data/dummyData';
 
-const RecommendedPosts = ({ currentUser, currentPostId, isHomePage = false }) => {
+const RecommendedPosts = ({ currentPostId, isHomePage = false }) => {
+  const [showAll, setShowAll] = useState(false);
+
   const recommendedPosts = useMemo(() => {
     let filteredPosts = [...posts];
     
     if (!isHomePage) {
       // Detay sayfasında benzer yazıları göster
       filteredPosts = filteredPosts.filter(post => 
-        post.id !== currentPostId && post.userId !== currentUser.id
-      );
-    } else {
-      // Ana sayfada popüler ve yeni yazıları göster
-      filteredPosts = filteredPosts.filter(post => 
-        post.userId !== currentUser.id
+        post.id !== currentPostId
       );
     }
 
     return filteredPosts
       .map(post => {
         let score = 0;
-        score += post.likes * 2; // Beğenilere daha fazla ağırlık ver
+        
+        // Görüntülenme sayısına göre puan ekle (ana faktör)
+        score += (post.views || 0);
         
         // Son 7 günde paylaşılan yazılara bonus puan
         const daysSincePosted = (new Date() - new Date(post.timestamp)) / (1000 * 60 * 60 * 24);
-        score += Math.max(0, 7 - daysSincePosted) * 3;
-        
-        // Yorum sayısına göre puan ekle
-        score += (post.comments?.length || 0) * 1.5;
+        score += Math.max(0, 7 - daysSincePosted) * 10;
         
         return { ...post, score };
       })
       .sort((a, b) => b.score - a.score)
-      .slice(0, 6);
-  }, [currentUser.id, currentPostId, isHomePage]);
+      .slice(0, 5);
+  }, [currentPostId, isHomePage]);
+
+  // Yazar bulma fonksiyonu
+  const getAuthor = (post) => {
+    if (post.authorId) {
+      return admins.find(admin => admin.id === post.authorId) || users.find(user => user.id === post.userId);
+    }
+    return users.find(user => user.id === post.userId);
+  };
+
+  // Gösterilecek yazıları belirle
+  const displayedPosts = showAll ? recommendedPosts : recommendedPosts.slice(0, 3);
 
   return (
-    <div className="card" style={{ marginTop: '0px' }}>
+    <div className="card" style={{
+      background: 'var(--surface-color)',
+      borderRadius: 'var(--radius-xl)',
+      boxShadow: 'var(--shadow-md)',
+      border: '1px solid var(--border-light)',
+      padding: '24px',
+      position: isHomePage ? 'sticky' : 'static',
+      top: isHomePage ? '92px' : 'auto'
+    }}>
       <h3 style={{ 
-        marginBottom: '24px', 
-        fontSize: '1.25rem',
+        fontSize: '1.3rem',
+        fontWeight: '700',
+        marginBottom: '20px',
+        color: 'var(--text-color)',
         display: 'flex',
         alignItems: 'center',
-        gap: '8px'
+        gap: '10px'
       }}>
-        <span className="material-icons" style={{ fontSize: '24px' }}>
-          {isHomePage ? 'recommend' : 'auto_stories'}
-        </span>
-        {isHomePage ? 'Önerilen Yazılar' : 'Benzer Yazılar'}
+        <span className="material-icons" style={{ 
+          fontSize: '24px',
+          color: 'var(--primary-color)'
+        }}>recommend</span>
+        Önerilen Yazılar
       </h3>
-      <div style={{ 
-        display: 'grid',
-        gridTemplateColumns: isHomePage ? '1fr' : 'repeat(3, 1fr)',
-        gap: isHomePage ? '16px' : '24px'
-      }}>
-        {recommendedPosts.map(post => {
-          const author = users.find(user => user.id === post.userId);
-          return (
-            <Link 
-              to={`/post/${post.id}`} 
-              key={post.id}
-              style={{ 
-                textDecoration: 'none',
-                color: 'inherit'
-              }}
-            >
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {displayedPosts.map((post, index) => (
+          <div 
+            key={post.id}
+            style={{
+              padding: '16px',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--background-color)',
+              border: '1px solid var(--border-light)',
+              cursor: 'pointer',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: '0',
+              left: '0',
+              width: '4px',
+              height: '100%',
+              background: `linear-gradient(135deg, var(--accent-color), var(--primary-color))`,
+              borderRadius: '0 var(--radius-lg) var(--radius-lg) 0'
+            }} />
+            
+            <div style={{ paddingLeft: '12px' }}>
               <div style={{
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                padding: '16px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--background-color)',
-                height: isHomePage ? 'auto' : '100%',
-                transition: 'transform 0.2s ease',
-                cursor: 'pointer',
-                ':hover': {
-                  transform: 'translateY(-4px)'
-                }
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '8px'
               }}>
-                <h4 style={{
-                  fontSize: isHomePage ? '1.1rem' : '1rem',
-                  fontWeight: '600',
-                  margin: 0,
-                  display: '-webkit-box',
-                  WebkitLineClamp: '2',
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden'
-                }}>{post.title}</h4>
-                
-                <p style={{
-                  margin: 0,
-                  fontSize: '0.9rem',
-                  color: 'var(--gray-color)',
-                  display: '-webkit-box',
-                  WebkitLineClamp: isHomePage ? '2' : '3',
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  flex: isHomePage ? 'none' : '1'
-                }}>
-                  {post.content}
-                </p>
-
-                <div style={{
+                <span style={{
+                  background: 'linear-gradient(135deg, var(--accent-color), var(--primary-color))',
+                  color: 'white',
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '0.9rem',
-                  color: 'var(--gray-color)',
-                  marginTop: isHomePage ? '0' : 'auto'
+                  justifyContent: 'center',
+                  fontSize: '0.7rem',
+                  fontWeight: '600'
                 }}>
-                  <span style={{ fontWeight: '500' }}>{author.name}</span>
-                  <span>•</span>
-                  <span>{post.likes} beğeni</span>
-                  <span>•</span>
-                  <span>{post.comments?.length || 0} yorum</span>
-                </div>
+                  {index + 1}
+                </span>
+                <span style={{
+                  fontSize: '0.8rem',
+                  color: 'var(--text-secondary)',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  <span className="material-icons" style={{ fontSize: '14px' }}>person</span>
+                  {getAuthor(post)?.name || 'Bilinmeyen Yazar'}
+                </span>
               </div>
-            </Link>
-          );
-        })}
+              
+              <h4 style={{
+                fontSize: '1rem',
+                fontWeight: '600',
+                margin: '0 0 8px 0',
+                color: 'var(--text-color)',
+                lineHeight: '1.4',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}>
+                {post.title}
+              </h4>
+              
+              <p style={{
+                fontSize: '0.85rem',
+                color: 'var(--text-secondary)',
+                margin: '0 0 12px 0',
+                lineHeight: '1.5',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}>
+                {post.content.substring(0, 80)}...
+              </p>
+              
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                fontSize: '0.8rem',
+                color: 'var(--text-secondary)'
+              }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="material-icons" style={{ fontSize: '14px' }}>visibility</span>
+                  {post.views}
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="material-icons" style={{ fontSize: '14px' }}>favorite</span>
+                  {post.likes}
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="material-icons" style={{ fontSize: '14px' }}>share</span>
+                  {post.shares || 0}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
+
+      {recommendedPosts.length > 3 && (
+        <button
+          onClick={() => setShowAll(!showAll)}
+          style={{
+            width: '100%',
+            marginTop: '16px',
+            padding: '12px',
+            background: 'transparent',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-lg)',
+            color: 'var(--primary-color)',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'var(--background-color)';
+            e.target.style.borderColor = 'var(--primary-color)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'transparent';
+            e.target.style.borderColor = 'var(--border-color)';
+          }}
+        >
+          <span className="material-icons" style={{ fontSize: '16px' }}>
+            {showAll ? 'expand_less' : 'expand_more'}
+          </span>
+          {showAll ? 'Daha Az Göster' : 'Daha Fazla Göster'}
+        </button>
+      )}
     </div>
   );
 };

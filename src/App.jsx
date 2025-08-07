@@ -2,110 +2,56 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Feed from './pages/Feed';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Trends from './pages/Trends';
+import Gundem from './pages/Gundem';
 import PostDetail from './pages/PostDetail';
-import Profile from './pages/Profile';
 import AdminPanel from './pages/AdminPanel';
-import { users } from './data/dummyData';
+import AdminLogin from './pages/AdminLogin';
 import './styles/main.css';
 
 const App = () => {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentAdmin, setCurrentAdmin] = useState(null);
 
-  const handleLogin = (user) => {
-    setCurrentUser(user);
+  const handleAdminLogin = (admin) => {
+    setCurrentAdmin(admin);
   };
 
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleAdminLogout = () => {
+    setCurrentAdmin(null);
   };
 
   return (
     <Router>
       <div>
-        <Navbar isLoggedIn={!!currentUser} currentUser={currentUser} onLogout={handleLogout} />
+        <Navbar currentAdmin={currentAdmin} onAdminLogout={handleAdminLogout} />
         
         <Routes>
           <Route 
             path="/" 
-            element={currentUser ? <Navigate to="/feed" /> : <Navigate to="/login" />} 
-          />
-          
-          <Route 
-            path="/login" 
-            element={
-              currentUser ? (
-                <Navigate to="/feed" />
-              ) : (
-                <Login onLogin={handleLogin} />
-              )
-            } 
-          />
-
-          <Route 
-            path="/register" 
-            element={
-              currentUser ? (
-                <Navigate to="/feed" />
-              ) : (
-                <Register onLogin={handleLogin} />
-              )
-            } 
+            element={<Navigate to="/feed" />} 
           />
           
           <Route 
             path="/feed" 
-            element={
-              currentUser ? (
-                <Feed currentUser={currentUser} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            } 
+            element={<Feed currentAdmin={currentAdmin} />} 
           />
 
           <Route 
-            path="/trends" 
-            element={
-              currentUser ? (
-                <Trends />
-              ) : (
-                <Navigate to="/login" />
-              )
-            } 
+            path="/trending" 
+            element={<Gundem currentAdmin={currentAdmin} />} 
           />
 
           <Route 
             path="/post/:postId" 
-            element={
-              currentUser ? (
-                <PostDetail currentUser={currentUser} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            } 
+            element={<PostDetail />} 
           />
 
           <Route 
-            path="/profile" 
+            path="/admin/login" 
             element={
-              currentUser ? (
-                <Profile currentUser={currentUser} />
+              currentAdmin ? (
+                <Navigate to="/feed" />
               ) : (
-                <Navigate to="/login" />
-              )
-            } 
-          />
-
-          <Route 
-            path="/profile/:userId" 
-            element={
-              currentUser ? (
-                <Profile currentUser={currentUser} />
-              ) : (
-                <Navigate to="/login" />
+                <AdminLogin onAdminLogin={handleAdminLogin} />
               )
             } 
           />
@@ -113,12 +59,10 @@ const App = () => {
           <Route 
             path="/admin" 
             element={
-              currentUser && currentUser.username === "Admin" ? (
-                <AdminPanel />
-              ) : currentUser ? (
-                <Navigate to="/" replace />
+              currentAdmin ? (
+                <AdminPanel currentAdmin={currentAdmin} />
               ) : (
-                <Navigate to="/login" replace />
+                <Navigate to="/admin/login" />
               )
             } 
           />

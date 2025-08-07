@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { posts } from '../data/dummyData';
 
 const TrendingTags = () => {
@@ -40,46 +39,42 @@ const TrendingTags = () => {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {topTags.map(([tag, count], index) => (
-          <Link 
-            key={tag} 
-            to="/trends" 
-            style={{ textDecoration: 'none' }}
-          >
-            <div style={{
+          <div 
+            key={tag}
+            style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '8px',
               borderRadius: '4px',
-              transition: 'background-color 0.2s',
               cursor: 'pointer',
               ':hover': {
                 backgroundColor: 'var(--background-color)'
               }
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ 
-                  color: 'var(--gray-color)',
-                  fontSize: '0.9rem',
-                  minWidth: '20px'
-                }}>
-                  {index + 1}
-                </span>
-                <span style={{ 
-                  color: 'var(--primary-color)',
-                  fontWeight: '500'
-                }}>
-                  {tag}
-                </span>
-              </div>
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ 
                 color: 'var(--gray-color)',
-                fontSize: '0.9rem'
+                fontSize: '0.9rem',
+                minWidth: '20px'
               }}>
-                {count} gönderi
+                {index + 1}
+              </span>
+              <span style={{ 
+                color: 'var(--primary-color)',
+                fontWeight: '500'
+              }}>
+                {tag}
               </span>
             </div>
-          </Link>
+            <span style={{ 
+              color: 'var(--gray-color)',
+              fontSize: '0.9rem'
+            }}>
+              {count} gönderi
+            </span>
+          </div>
         ))}
       </div>
     </div>

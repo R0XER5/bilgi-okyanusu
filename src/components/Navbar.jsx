@@ -1,20 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
-const Navbar = ({ isLoggedIn, currentUser, onLogout }) => {
-  const [showDropdown, setShowDropdown] = useState(false);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    onLogout();
-    navigate('/login');
-    setShowDropdown(false);
-  };
-
-  const handleProfileClick = () => {
-    navigate('/profile');
-    setShowDropdown(false);
-  };
+const Navbar = ({ currentAdmin, onAdminLogout }) => {
+  const [showAdminMenu, setShowAdminMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   return (
     <nav className="navbar">
@@ -22,83 +11,193 @@ const Navbar = ({ isLoggedIn, currentUser, onLogout }) => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '0 32px'
+        padding: '0',
+        width: '98vw',
+        maxWidth: 'none',
+        minWidth: '320px',
+        margin: '0 auto'
       }}>
-        <Link to="/" className="logo" style={{ marginLeft: '16px' }}>
+        {/* Gündem Butonu - Sadece bilgisayar versiyonunda görünür */}
+        <Link to="/trending" className="gundem-button" style={{ display: 'none' }}>
+          <span className="material-icons">trending_up</span>
+          Gündem
+        </Link>
+        
+        {/* Logo */}
+        <Link to="/" className="logo" style={{ marginLeft: '0px' }}>
           <h1>Bilgi Okyanusu</h1>
         </Link>
         
-        <div className="nav-links" style={{ marginRight: '16px' }}>
-          {isLoggedIn ? (
+        <div className="nav-links" style={{ marginRight: '0px', display: 'flex', alignItems: 'center', gap: '24px' }}>
+          {currentAdmin && (
             <>
-              <Link to="/feed" className="nav-link">Ana Sayfa</Link>
-              <Link to="/trends" className="nav-link">
-                <span className="material-icons" style={{ fontSize: '20px', marginRight: '4px' }}>
-                  trending_up
-                </span>
-                Gündem
+              <Link to="/admin" className="nav-link" style={{
+                textDecoration: 'none',
+                color: 'var(--gray-color)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span className="material-icons" style={{ fontSize: '20px' }}>admin_panel_settings</span>
+                Yönetim Paneli
               </Link>
-              <div className="user-menu" style={{ position: 'relative' }}>
-                <div
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  style={{ 
+              
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowAdminMenu(!showAdminMenu)}
+                  style={{
+                    background: 'var(--white)',
+                    border: '2px solid var(--primary-color)',
+                    borderRadius: '8px',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    gap: '8px',
                     color: 'var(--primary-color)',
                     fontWeight: '600',
-                    fontSize: '17px'
+                    fontSize: '1rem',
+                    padding: '8px 16px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
                   }}
                 >
-                  <span>{currentUser?.name}</span>
-                </div>
+                  <span>{currentAdmin.name}</span>
+                  <span className="material-icons" style={{ fontSize: '20px' }}>
+                    {showAdminMenu ? 'expand_less' : 'expand_more'}
+                  </span>
+                </button>
 
-                {showDropdown && (
-                  <div 
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      right: 0,
-                      marginTop: '8px',
-                      backgroundColor: 'var(--white)',
-                      borderRadius: '8px',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                      width: '160px',
-                      zIndex: 1000
-                    }}
-                  >
-                    <div
-                      onClick={handleProfileClick}
-                      className="user-menu-item"
+                {showAdminMenu && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '8px',
+                    backgroundColor: 'var(--white)',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    width: '200px',
+                    zIndex: 1000,
+                    border: '1px solid var(--border-color)'
+                  }}>
+                    <div style={{
+                      padding: '12px 16px',
+                      borderBottom: '1px solid var(--border-color)',
+                      fontSize: '0.9rem',
+                      color: 'var(--gray-color)'
+                    }}>
+                      Admin: {currentAdmin.name}
+                    </div>
+                    <button
+                      onClick={onAdminLogout}
                       style={{
-                        borderBottom: '1px solid var(--border-color)'
+                        width: '100%',
+                        padding: '12px 16px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        color: '#dc3545',
+                        fontSize: '0.9rem'
                       }}
                     >
-                      <span className="material-icons">person</span>
-                      <span>Profil</span>
-                    </div>
-                    <div
-                      onClick={handleLogout}
-                      className="user-menu-item"
-                      style={{
-                        color: '#dc3545'
-                      }}
-                    >
-                      <span className="material-icons">logout</span>
-                      <span>Çıkış Yap</span>
-                    </div>
+                      <span className="material-icons" style={{ fontSize: '18px' }}>logout</span>
+                      Çıkış Yap
+                    </button>
                   </div>
                 )}
               </div>
             </>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-outline">Giriş Yap</Link>
-              <Link to="/register" className="btn btn-primary">Kayıt Ol</Link>
-            </>
           )}
         </div>
+        
+        {/* Mobil Menü */}
+        {showMobileMenu && (
+          <div className="mobile-menu" style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            backgroundColor: 'var(--white)',
+            borderTop: '1px solid var(--border-color)',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            zIndex: 999,
+            padding: '16px'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <Link to="/" style={{
+                textDecoration: 'none',
+                color: 'var(--text-color)',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <span className="material-icons" style={{ fontSize: '20px' }}>home</span>
+                Ana Sayfa
+              </Link>
+              
+              <Link to="/trending" style={{
+                textDecoration: 'none',
+                color: 'var(--text-color)',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <span className="material-icons" style={{ fontSize: '20px' }}>trending_up</span>
+                Trendler
+              </Link>
+              
+              <Link to="/categories" style={{
+                textDecoration: 'none',
+                color: 'var(--text-color)',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <span className="material-icons" style={{ fontSize: '20px' }}>category</span>
+                Kategoriler
+              </Link>
+              
+              <Link to="/about" style={{
+                textDecoration: 'none',
+                color: 'var(--text-color)',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <span className="material-icons" style={{ fontSize: '20px' }}>info</span>
+                Hakkımızda
+              </Link>
+              
+              <Link to="/contact" style={{
+                textDecoration: 'none',
+                color: 'var(--text-color)',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <span className="material-icons" style={{ fontSize: '20px' }}>contact_support</span>
+                İletişim
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
